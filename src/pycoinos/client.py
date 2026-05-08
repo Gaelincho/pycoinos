@@ -55,6 +55,18 @@ class Client:
         if amount == -1:
             raise ValueError("amount is required")
 
+        invoice = {}
+
+        invoice["type"] = type
+        invoice["fiat"] = fiat
+        invoice["amount"] = amount
+
+        if webhook is not None:
+            invoice["webhook"] = webhook
+
+        if secret is not None:
+            invoice["secret"] = secret
+
         r = self._session.post(
             f"{BASE_URL}/invoice",
             headers={

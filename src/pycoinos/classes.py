@@ -71,6 +71,8 @@ class BaseAddress:
     type: TYPES
     uid: str
     user: BaseUser | None
+    webhook: str | None
+    secret: str | None
 
 
 @dataclass
