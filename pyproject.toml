@@ -1,0 +1,20 @@
+[project]
+name = "pycoinos"
+version = "0.1.0"
+description = "A python helper for the coinos API"
+readme = "README.md"
+authors = [{ name = "Gaelincho", email = "g43l@proton.me" }]
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.13"
+dependencies = ["requests>=2.33.1"]
+
+[project.scripts]
+pycoinos = "pycoinos:main"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project.urls]
+homepage = "https://github.com/Gaelincho/pycoinos"
