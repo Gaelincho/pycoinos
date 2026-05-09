@@ -89,6 +89,7 @@ class Invoice(BaseAddress):
     ourfee: float | None = None
     ref: str | None = None
     preimage: str | None = None
+    settled: int | None = None
 
 
 @dataclass
@@ -103,4 +104,4 @@ class Payments:
     payments: list[Payment] | None = None
     count: int | None = None
     incoming: dict | None = None
-    outcoming: dict | None = None
+    outgoing: dict | None = None
