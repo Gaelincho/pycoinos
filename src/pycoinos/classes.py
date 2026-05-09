@@ -34,72 +34,72 @@ class SecretStr:
 
 @dataclass
 class BaseUser:
-    currency: str
-    id: str
-    npub: str
-    picture: str
-    pubkey: str
-    username: str
+    currency: str | None = None
+    id: str | None = None
+    npub: str | None = None
+    picture: str | None = None
+    pubkey: str | None = None
+    username: str | None = None
 
 
 @dataclass
 class User(BaseUser):
-    balance: float
-    currencies: list[str]
-    fiat: bool
-    locked: Any
-    locktime: int
-    nsec: SecretStr
-    prompt: bool
+    balance: float | None = None
+    currencies: list[str] | None = None
+    fiat: bool | None = None
+    locked: Any | None = None
+    locktime: int | None = None
+    nsec: SecretStr | None = None
+    prompt: bool | None = None
 
 
 @dataclass
 class BaseAddress:
-    aid: str
-    amount: float
-    created: int
-    currency: str
-    hash: str
-    id: str
-    items: list
-    own: bool
-    pending: float
-    rate: float
-    received: float
-    text: str
-    tip: Any
-    type: TYPES
-    uid: str
-    user: BaseUser | None
-    webhook: str | None
-    secret: str | None
+    aid: str | None = None
+    amount: float | None = None
+    created: int | None = None
+    currency: str | None = None
+    hash: str | None = None
+    id: str | None = None
+    items: list | None = None
+    own: bool | None = None
+    pending: float | None = None
+    rate: float | None = None
+    received: float | None = None
+    text: str | None = None
+    tip: Any | None = None
+    type: TYPES | None = None
+    uid: str | None = None
+    user: BaseUser | None = None
+    webhook: str | None = None
+    secret: str | None = None
 
 
 @dataclass
 class Address(BaseAddress):
-    address_type: str
+    address_type: str | None = None
 
 
 @dataclass
 class Invoice(BaseAddress):
-    expiry: int
-    paymentHash: str
-    confirmed: bool | None
-    fee: float | None
-    ourfee: float | None
-    ref: str | None
+    expiry: int | None = None
+    paymentHash: str | None = None
+    confirmed: bool | None = None
+    fee: float | None = None
+    ourfee: float | None = None
+    ref: str | None = None
 
 
 @dataclass
 class Payment(Address, Invoice):
-    iid: str
-    memo: str
-    hex: str
+    iid: str | None = None
+    memo: str | None = None
+    hex: str | None = None
 
 
 @dataclass
 class Payments:
-    payments: list[Payment]
-    count: int
-    incoming: dict
-    outcoming: dict
+    payments: list[Payment] | None = None
+    count: int | None = None
+    incoming: dict | None = None
+    outcoming: dict | None = None
