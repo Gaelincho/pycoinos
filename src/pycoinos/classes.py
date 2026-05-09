@@ -88,6 +88,7 @@ class Invoice(BaseAddress):
     fee: float | None = None
     ourfee: float | None = None
     ref: str | None = None
+    preimage: str | None = None
 
 
 @dataclass
