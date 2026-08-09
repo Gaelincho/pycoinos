@@ -1,6 +1,6 @@
 # pycoinos
 
-This package serves as a python toolkit for interacting with the [Coinos API](https://coinos.io/docs).
+This package serves as a python toolkit for interacting with coinos.io's API ([Coinos API](https://coinos.io/docs)).
 
 ## Usage
 
@@ -26,6 +26,7 @@ The `Client` class has the following methods:
 ## Changelog
 
 - v0.1.0: Initial release
+- v0.2.0: Added async support with httpx
 
 ## License
 

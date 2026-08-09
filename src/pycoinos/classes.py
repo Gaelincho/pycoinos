@@ -40,6 +40,7 @@ class BaseUser:
     picture: str | None = None
     pubkey: str | None = None
     username: str | None = None
+    migrated: bool | None = None
 
 
 @dataclass

@@ -1,29 +1,32 @@
 import warnings
 
-import requests as r
+import httpx
 
 from .classes import Address, Invoice, Payments, SecretStr, User
 from .constants import BASE_URL, TYPES
 
 
 class Client:
-    def __init__(self, token=None):
-        self._session = r.Session()
+    def __init__(self, token: str | None = None):
+        self.__token = token
+        self._client = httpx.AsyncClient(base_url=BASE_URL)
+
+    async def aclose(self):
+        await self._client.aclose()
+
+    def set_token(self, token: str):
         self.__token = token
 
-    def set_token(self, token):
-        self.__token = token
+    def _headers(self):
+        return {
+            "Authorization": f"Bearer {self.__token}",
+            "Content-Type": "application/json",
+        }
 
-    def me(self):
+    async def me(self) -> User:
         """Get your account details and balance."""
-
-        user: dict = self._session.get(
-            f"{BASE_URL}/me",
-            headers={
-                "Authorization": f"Bearer {self.__token}",
-                "Content-Type": "application/json",
-            },
-        ).json()
+        resp = await self._client.get("/me", headers=self._headers())
+        user: dict = resp.json()
 
         try:
             user["nsec"] = SecretStr(user["nsec"])
@@ -32,148 +35,110 @@ class Client:
 
         return User(**user)
 
-    def post_invoice(
+    async def post_invoice(
         self,
         type: TYPES = "lightning",
         fiat: bool = False,
         amount: float = -1,
-        webhook: str = None,
-        secret: str = None,
+        webhook: str | None = None,
+        secret: str | None = None,
     ) -> Invoice | Address:
-        """Create an invoice.
-        Args:
-            type: bitcoin or lightning
-            fiat: whether the amount is denominated in satoshis or local currency
-            amount: amount to be paid
-            webhook: remote endpoint to call when the invoice is paid
-            secret: a secret value passed to the webhook to authenticate the request
-
-        Returns:
-            Invoice (lightning) or Address (bitcoin)
-        """
+        """Create an invoice."""
 
         if amount == -1:
             raise ValueError("amount is required")
 
-        invoice = {}
+        payload = {
+            "invoice": {
+                "type": type,
+                "fiat": fiat,
+                "amount": amount,
+                "webhook": webhook,
+                "secret": secret,
+            }
+        }
 
-        invoice["type"] = type
-        invoice["fiat"] = fiat
-        invoice["amount"] = amount
+        resp = await self._client.post(
+            "/invoice",
+            headers=self._headers(),
+            json=payload,
+        )
+        data = resp.json()
 
-        if webhook is not None:
-            invoice["webhook"] = webhook
+        if data["type"] == "lightning":
+            return Invoice(**data)
+        if data["type"] == "bitcoin":
+            return Address(**data)
 
-        if secret is not None:
-            invoice["secret"] = secret
+        raise ValueError("unknown invoice type", data["type"], data)
 
-        r = self._session.post(
-            f"{BASE_URL}/invoice",
-            headers={
-                "Authorization": f"Bearer {self.__token}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "invoice": {
-                    "type": type,
-                    "fiat": fiat,
-                    "amount": amount,
-                    "webhook": webhook,
-                    "secret": secret,
-                }
-            },
-        ).json()
+    async def get_invoice(self, hash: str) -> Invoice | Address:
+        """Fetch an invoice."""
 
-        if r["type"] == "lightning":
-            return Invoice(**r)
-        if r["type"] == "bitcoin":
-            return Address(**r)
+        resp = await self._client.get(
+            f"/invoice/{hash}",
+            headers=self._headers(),
+        )
+        data = resp.json()
 
-        raise ValueError("unknown invoice type", r["type"], r)
+        if data["type"] == "lightning":
+            return Invoice(**data)
+        if data["type"] == "bitcoin":
+            return Address(**data)
 
-    def get_invoice(self, hash: str) -> Invoice | Address:
-        """Fetch an invoice by passing a bitcoin address or lightning payment hash."""
+        raise ValueError("unknown invoice type", data["type"], data)
 
-        r = self._session.get(
-            f"{BASE_URL}/invoice/{hash}",
-            headers={
-                "Authorization": f"Bearer {self.__token}",
-                "Content-Type": "application/json",
-            },
-        ).json()
-
-        if r["type"] == "lightning":
-            return Invoice(**r)
-        if r["type"] == "bitcoin":
-            return Address(**r)
-
-        raise ValueError("unknown invoice type", r["type"], r)
-
-    def post_payment(self, payreq: str) -> Invoice:
+    async def post_payment(self, payreq: str) -> Invoice:
         """Send a lightning payment."""
 
-        r = self._session.post(
-            f"{BASE_URL}/payments",
-            headers={
-                "Authorization": f"Bearer {self.__token}",
-                "Content-Type": "application/json",
-            },
+        resp = await self._client.post(
+            "/payments",
+            headers=self._headers(),
             json={"payreq": payreq},
-        ).json()
+        )
+        data = resp.json()
 
-        if r["type"] == "lightning":
-            return Invoice(**r)
-        if r["type"] == "bitcoin":
+        if data["type"] == "lightning":
+            return Invoice(**data)
+        if data["type"] == "bitcoin":
             raise NotImplementedError(
                 "bitcoin payments not supported with this endpoint"
             )
 
-        raise ValueError("unknown invoice type", r["type"], r)
+        raise ValueError("unknown invoice type", data["type"], data)
 
-    def send(self, amount: float, username: str) -> dict:
-        """Send an internal payment to another user."""
+    async def send(self, amount: float, username: str) -> dict:
+        """Send an internal payment."""
 
-        r = self._session.post(
-            f"{BASE_URL}/send",
-            headers={
-                "Authorization": f"Bearer {self.__token}",
-                "Content-Type": "application/json",
-            },
+        resp = await self._client.post(
+            "/send",
+            headers=self._headers(),
             json={"amount": amount, "username": username},
         )
-        return r.json()
+        return resp.json()
 
-    def bitcoin_payment(self, amount: float, address: str) -> dict:
-        """Send a bitcoin payment. This function hasn't been tested."""
+    async def bitcoin_payment(self, amount: float, address: str) -> dict:
+        """Send a bitcoin payment. Not tested."""
 
-        r = self._session.post(
-            f"{BASE_URL}/bitcoin/send",
-            headers={
-                "Authorization": f"Bearer {self.__token}",
-                "Content-Type": "application/json",
-            },
+        resp = await self._client.post(
+            "/bitcoin/send",
+            headers=self._headers(),
             json={"amount": amount, "address": address},
         )
         warnings.warn(
-            "This function hasn't been tested. Use at your own risk", UserWarning
+            "This function hasn't been tested. Use at your own risk",
+            UserWarning,
         )
-        return r.json()
+        return resp.json()
 
-    def get_payments(
+    async def get_payments(
         self,
         start: int | None = None,
         end: int | None = None,
         limit: int | None = None,
         offset: int | None = None,
     ) -> Payments:
-        """Get all payments sent or received by the current user
-
-        Args:
-            start: only payments after this unix time
-            end: only payments before this unix time
-            limit: limit to this integer number of results
-            offset: start limiting from this integer offset
-        """
+        """Get all payments."""
 
         params = {}
         if start is not None:
@@ -185,13 +150,10 @@ class Client:
         if offset is not None:
             params["offset"] = offset
 
-        r = self._session.get(
-            f"{BASE_URL}/payments",
-            headers={
-                "Authorization": f"Bearer {self.__token}",
-                "Content-Type": "application/json",
-            },
+        resp = await self._client.get(
+            "/payments",
+            headers=self._headers(),
             params=params,
         )
 
-        return Payments(**r.json())
+        return Payments(**resp.json())
