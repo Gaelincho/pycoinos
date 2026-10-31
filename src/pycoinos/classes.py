@@ -47,6 +47,7 @@ class BaseUser:
 class User(BaseUser):
     balance: float | None = None
     currencies: list[str] | None = None
+    hasnsec: bool | None = None
     fiat: bool | None = None
     locked: Any | None = None
     locktime: int | None = None

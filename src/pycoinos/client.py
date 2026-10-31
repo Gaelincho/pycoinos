@@ -96,6 +96,9 @@ class Client:
             headers=self._headers(),
             json={"payreq": payreq},
         )
+        if resp.status_code == 500:
+            raise ValueError(resp.text)
+
         data = resp.json()
 
         if data["type"] == "lightning":
