@@ -88,6 +88,7 @@ class Invoice(BaseAddress):
     paymentHash: str | None = None
     confirmed: bool | None = None
     fee: float | None = None
+    memo: str | None = None
     ourfee: float | None = None
     ref: str | None = None
     preimage: str | None = None

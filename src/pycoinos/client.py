@@ -42,6 +42,7 @@ class Client:
         amount: float = -1,
         webhook: str | None = None,
         secret: str | None = None,
+        memo: str | None = None,
     ) -> Invoice | Address:
         """Create an invoice."""
 
@@ -57,6 +58,9 @@ class Client:
                 "secret": secret,
             }
         }
+
+        if memo:
+            payload["invoice"]["memo"] = memo
 
         resp = await self._client.post(
             "/invoice",
